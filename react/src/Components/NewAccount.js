@@ -6,30 +6,19 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/esm/Container";
 
-export default function NewAccount({ handleUserEmail, handleJoinIn }) {
-  const [firstName, setFirstName] = useState("");
-  const [firstLastName, setLastName] = useState("");
-  const [country, setCountry] = useState("");
-  const [address, setAddress] = useState("");
+import Swal from "sweetalert2";
+
+import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+
+import { useHistory } from "react-router-dom";
+
+export default function NewAccount({ app, handleNewAccount }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mobileNumber, setMobileNumber] = useState("");
 
-  const handleFirstName = (event) => {
-    setFirstName(event.target.value);
-  };
+  const [message, setMessage] = useState("");
 
-  const handleLastName = (event) => {
-    setLastName(event.target.value);
-  };
-
-  const handleCountry = (event) => {
-    setCountry(event.target.value);
-  };
-
-  const handleAddress = (event) => {
-    setAddress(event.target.value);
-  };
+  const history = useHistory();
 
   const handleEmail = (event) => {
     setEmail(event.target.value);
@@ -39,13 +28,52 @@ export default function NewAccount({ handleUserEmail, handleJoinIn }) {
     setPassword(event.target.value);
   };
 
-  const handleMobileNumber = (event) => {
-    setMobileNumber(event.target.value);
+  const handleClick = () => {
+    let value = true;
+
+    if (email.trim().length === 0) {
+      setMessage("You must complete the field");
+      value = false;
+    }
+    if (password.trim().length === 0) {
+      setMessage("You must complete the field");
+      value = false;
+    }
+
+    if (value) {
+      handleRegister();
+    }
   };
 
-  const handleClick = () => {
-    handleJoinIn();
-    handleUserEmail(email);
+  const handleRegister = async () => {
+    try {
+      const auth = getAuth(app);
+
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      Swal.fire("You have succesfully registered");
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          email: email,
+        })
+      );
+
+      const newAccount = localStorage.getItem("account");
+
+      if (newAccount) {
+        history.push("/summarypurchase");
+      } else {
+        history.push("/");
+      }
+
+      handleNewAccount(email);
+
+      setEmail("");
+      setPassword("");
+    } catch (err) {
+      Swal.fire("User or Password are not valid");
+    }
   };
 
   return (
@@ -55,32 +83,22 @@ export default function NewAccount({ handleUserEmail, handleJoinIn }) {
           <Col xs={9} sm={8} md={7} lg={5} xl={5} className="bg-light mt-5">
             <Form>
               <Form.Group>
-                <Form.Label>First Name</Form.Label>
-                <Form.Control type="text" onChange={handleFirstName} />
-              </Form.Group>
-              <Form.Group>
-                <Form.Label>Last Name</Form.Label>
-                <Form.Control type="text" onChange={handleLastName} />
-              </Form.Group>
-              <Form.Group>
-                <Form.Label>Country</Form.Label>
-                <Form.Control type="text" onChange={handleCountry} />
-              </Form.Group>
-              <Form.Group>
-                <Form.Label>Address</Form.Label>
-                <Form.Control type="text" onChange={handleAddress} />
-              </Form.Group>
-              <Form.Group>
                 <Form.Label>Email address</Form.Label>
-                <Form.Control type="text" onChange={handleEmail} />
+                <Form.Control
+                  type="text"
+                  onChange={handleEmail}
+                  value={email}
+                />
+                {email ? "" : message}
               </Form.Group>
               <Form.Group>
                 <Form.Label>Password</Form.Label>
-                <Form.Control type="password" onChange={handlePassword} />
-              </Form.Group>
-              <Form.Group>
-                <Form.Label>Mobile Number</Form.Label>
-                <Form.Control type="text" onChange={handleMobileNumber} />
+                <Form.Control
+                  type="password"
+                  onChange={handlePassword}
+                  value={password}
+                />
+                {password ? "" : message}
               </Form.Group>
             </Form>
             <Button variant="primary" onClick={handleClick}>
